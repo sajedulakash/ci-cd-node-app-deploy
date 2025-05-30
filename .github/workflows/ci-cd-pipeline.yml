@@ -23,7 +23,7 @@ jobs:
       - name: Run tests and save results
         run: |
           mkdir -p test-results
-          npm check > test-results/test-output.txt
+          npm test > test-results/test-output.txt
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -38,16 +38,30 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Create download directory
+        run: |
+          mkdir -p test-results
+
       - name: Download test artifact
         uses: actions/download-artifact@v4
         with:
           name: test-results
+          path: test-results/
 
       - name: Display test results
         run: cat test-results/test-output.txt
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.16.0'
+
       - name: Install dependencies
         run: npm install
+
+      - name: Install PM2 globally
+        run: |
+          npm install pm2@latest -g
 
       - name: Start application
         run: |
