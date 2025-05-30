@@ -1,0 +1,55 @@
+name: Node.js CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: self-hosted-kubuntu 
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.16.0'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests and save results
+        run: |
+          mkdir -p test-results
+          npm check > test-results/test-output.txt
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results/
+
+  deploy:
+    runs-on: self-hosted-kubuntu
+    needs: test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download test artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: test-results
+
+      - name: Display test results
+        run: cat test-results/test-output.txt
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Start application
+        run: |
+          pm2 delete node-app || true
+          pm2 start "./src/server.js" --name node-app
